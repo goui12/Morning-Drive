@@ -1,0 +1,13 @@
+<manifest xmlns:android="http://schemas.android.com/apk/res/android" package="com.google.android.apps.maps">
+    <uses-sdk android:minSdkVersion="26" android:targetSdkVersion="36" />
+    <application android:label="Maps TEST PROBE — emulator only" android:theme="@android:style/Theme.Material.NoActionBar">
+        <activity android:name="com.cameron.mapsprobe.ProbeActivity" android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="google.navigation" />
+            </intent-filter>
+        </activity>
+    </application>
+</manifest>

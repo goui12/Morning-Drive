@@ -1,0 +1,1 @@
+NOT RUN: Android 16 emulator did not reach a usable boot/ADB state; no emulator or physical Galaxy S25 runtime verification is claimed.

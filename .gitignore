@@ -1,0 +1,22 @@
+# Signing identity and local secrets
+signing/
+*.p12
+*.jks
+*.keystore
+.env
+.env.*
+*.env
+local.properties
+
+# Generated Android and Java output, at every level
+build/
+classes/
+*.apk
+*.apk.idsig
+*.class
+
+# Editor and OS state
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db
