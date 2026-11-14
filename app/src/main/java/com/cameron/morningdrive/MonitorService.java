@@ -5,8 +5,6 @@ import android.content.*;
 import android.content.pm.ServiceInfo;
 import android.os.*;
 import android.provider.Settings;
-import java.text.DateFormat;
-import java.util.Date;
 
 public final class MonitorService extends Service {
     private static final String CHANNEL="automation";
@@ -59,7 +57,7 @@ public final class MonitorService extends Service {
     }
     private void evaluate() {
         Config v=Config.load(this);
-        if(!v.enabled) { stopForeground(STOP_FOREGROUND_REMOVE); stopSelf(); return; }
+        if(!v.enabled||!v.valid()) { stopForeground(STOP_FOREGROUND_REMOVE); stopSelf(); return; }
         Engine.refresh(this);
         long due=Engine.due(this);
         if(due!=0) {
@@ -80,8 +78,7 @@ public final class MonitorService extends Service {
     private Notification notification() {
         PendingIntent settings=PendingIntent.getActivity(this,10,new Intent(this,MainActivity.class),PendingIntent.FLAG_UPDATE_CURRENT|PendingIntent.FLAG_IMMUTABLE);
         boolean pending=Engine.due(this)!=0;
-        long next=Engine.nextTime(this);
-        String text=pending ? "Departure pending • unlock to navigate" : next==0 ? "Open app to finish setup" : "Next: "+DateFormat.getDateTimeInstance(DateFormat.SHORT,DateFormat.SHORT).format(new Date(next));
+        String text=Engine.nextSummary(this)+(pending?" · unlock to navigate":"");
         Notification.Builder n=new Notification.Builder(this,CHANNEL).setSmallIcon(com.cameron.morningdrive.R.drawable.ic_notification)
             .setContentTitle("Morning Drive is enabled").setContentText(text)
             .setContentIntent(settings).setOngoing(true).setOnlyAlertOnce(true)

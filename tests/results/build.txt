@@ -12,4 +12,4 @@ Verified using v3.1 scheme (APK Signature Scheme v3.1): false
 Verified using v4 scheme (APK Signature Scheme v4): false
 Verified for SourceStamp: false
 Number of signers: 1
-Built: /workspace/scratch/d2a08db0b046/morning-drive/build/Morning_Drive.apk
+Built: /workspace/scratch/d2a08db0b046/morning-drive-v2/build/Morning_Drive.apk

@@ -1,52 +1,82 @@
 package com.cameron.morningdrive;
 
-import java.time.Instant;
-import java.time.LocalDate;
-import java.time.ZoneId;
+import java.time.*;
 
-/** JVM regression checks for scheduling boundaries; no Android or test framework dependency. */
+/** Regression tests require only a JDK; no Android runtime or third-party dependencies. */
 public final class ScheduleTest {
-    private static final ZoneId LA = ZoneId.of("America/Los_Angeles");
-    private static final int WEEKDAYS = 31;
-    private static final long NEVER = Long.MIN_VALUE;
     private static int checks;
-    private static long utc(String value) { return Instant.parse(value).toEpochMilli(); }
-    private static long day(String value) { return LocalDate.parse(value).toEpochDay(); }
-    private static void eq(String name, long expected, long actual) {
-        checks++;
-        if (expected != actual) throw new AssertionError(name + ": expected " + expected + ", got " + actual);
+    private static final ZoneId LA=ZoneId.of("America/Los_Angeles");
+    private static final long NONE=Long.MIN_VALUE;
+    private static void ok(boolean condition,String message) {
+        checks++; if(!condition) throw new AssertionError(message);
+    }
+    private static long time(String text) { return LocalDateTime.parse(text).atZone(LA).toInstant().toEpochMilli(); }
+    private static long day(String text) { return LocalDate.parse(text).toEpochDay(); }
+    private static Schedule.Entry on(String id) { return new Schedule.Entry(true,id,false,7,0); }
+    private static Schedule.Entry[] week() {
+        Schedule.Entry[] w=new Schedule.Entry[7];
+        for(int i=0;i<7;i++) w[i]=new Schedule.Entry(false,"",false,7,0);
+        w[0]=on("airport");w[1]=on("bank");w[2]=on("airport");w[3]=on("bank");w[4]=on("arena");
+        return w;
+    }
+    private static Schedule.Event due(String now,Schedule.Entry[] w,long eligible,long handled,long skip) {
+        return Schedule.due(time(now),LA,w,7,0,eligible,handled,skip);
+    }
+    private static Schedule.Event next(String now,Schedule.Entry[] w,long eligible,long handled,long skip) {
+        return Schedule.next(time(now),LA,w,7,0,eligible,handled,skip);
     }
     public static void main(String[] args) {
-        long fri7 = utc("2026-11-13T15:00:00Z");
-        long fri701 = utc("2026-11-13T15:01:00Z");
-        long fri6 = utc("2026-11-13T14:00:00Z");
-        long mon7 = utc("2026-11-16T15:00:00Z");
-        eq("before departure is not due", 0, Schedule.due(fri6, LA, 7, 0, WEEKDAYS, 0, NEVER));
-        eq("at departure is due", fri7, Schedule.due(fri7, LA, 7, 0, WEEKDAYS, 0, NEVER));
-        eq("unlock at 7:01 retains 7:00 occurrence", fri7, Schedule.due(fri701, LA, 7, 0, WEEKDAYS, 0, NEVER));
-        eq("late evening is still pending", fri7, Schedule.due(utc("2026-11-14T07:59:59Z"), LA, 7, 0, WEEKDAYS, 0, NEVER));
-        eq("pending expires at local midnight", 0, Schedule.due(utc("2026-11-14T08:00:00Z"), LA, 7, 0, WEEKDAYS, 0, NEVER));
-        eq("Saturday excluded", 0, Schedule.due(utc("2026-11-14T16:00:00Z"), LA, 7, 0, WEEKDAYS, 0, NEVER));
-        eq("next before departure", fri7, Schedule.next(fri6, LA, 7, 0, WEEKDAYS, 0, NEVER));
-        eq("next skips the weekend", mon7, Schedule.next(fri7, LA, 7, 0, WEEKDAYS, 0, NEVER));
-        eq("duplicate unlock cannot repeat handled day", 0, Schedule.due(fri701, LA, 7, 0, WEEKDAYS, 0, day("2026-11-13")));
-        eq("handled previous day does not block today", fri7, Schedule.due(fri701, LA, 7, 0, WEEKDAYS, 0, day("2026-11-12")));
-        eq("enable after departure does not catch stale trip", 0, Schedule.due(fri701, LA, 7, 0, WEEKDAYS, fri7 + 1, NEVER));
-        eq("enable before departure catches trip", fri7, Schedule.due(fri701, LA, 7, 0, WEEKDAYS, fri6, NEVER));
-        eq("enable after departure finds next selected day", mon7, Schedule.next(fri701, LA, 7, 0, WEEKDAYS, fri701, NEVER));
-        eq("single Friday selection rolls a full week", utc("2026-11-20T15:00:00Z"), Schedule.next(fri701, LA, 7, 0, 16, fri6, NEVER));
-        eq("no selected days means no next occurrence", 0, Schedule.next(fri6, LA, 7, 0, 0, 0, NEVER));
-        eq("no selected days means not due", 0, Schedule.due(fri701, LA, 7, 0, 0, 0, NEVER));
-        eq("unconfigured eligibility prevents due", 0, Schedule.due(fri701, LA, 7, 0, WEEKDAYS, Long.MAX_VALUE, NEVER));
-        eq("unconfigured eligibility prevents next", 0, Schedule.next(fri701, LA, 7, 0, WEEKDAYS, Long.MAX_VALUE, NEVER));
-        eq("spring missing 02:30 shifts through DST gap", utc("2026-03-08T10:30:00Z"), Schedule.at(LocalDate.parse("2026-03-08"), 2, 30, LA));
-        eq("autumn overlap chooses earlier 01:30", utc("2026-11-01T08:30:00Z"), Schedule.at(LocalDate.parse("2026-11-01"), 1, 30, LA));
-        eq("second repeated 01:30 does not launch again", 0, Schedule.due(utc("2026-11-01T09:30:00Z"), LA, 1, 30, 64, 0, day("2026-11-01")));
-        eq("summer 7am follows PDT", utc("2026-07-13T14:00:00Z"), Schedule.at(LocalDate.parse("2026-07-13"), 7, 0, LA));
-        eq("zone change follows local 7am", utc("2026-11-13T12:00:00Z"), Schedule.at(LocalDate.parse("2026-11-13"), 7, 0, ZoneId.of("America/New_York")));
-        eq("new year rollover", utc("2027-01-01T15:00:00Z"), Schedule.next(utc("2026-12-31T20:00:00Z"), LA, 7, 0, WEEKDAYS, 0, NEVER));
-        eq("Monday bit mapping", 1, Schedule.selected(LocalDate.parse("2026-11-16"), 1) ? 1 : 0);
-        eq("Sunday bit mapping", 1, Schedule.selected(LocalDate.parse("2026-11-15"), 64) ? 1 : 0);
-        System.out.println("PASS: " + checks + " schedule regression checks");
+        Schedule.Entry[] w=week();
+        ok(due("2026-11-16T06:59:59",w,0,NONE,NONE)==null,"before departure");
+        Schedule.Event e=due("2026-11-16T07:00:00",w,0,NONE,NONE);
+        ok(e!=null&&e.time==time("2026-11-16T07:00:00"),"exact due minute");
+        ok(e.locationId.equals("airport")&&e.weekday==0,"Monday airport selection");
+        ok(due("2026-11-17T07:01:00",w,0,NONE,NONE).locationId.equals("bank"),"Tuesday bank selection");
+        ok(due("2026-11-18T07:01:00",w,0,NONE,NONE).locationId.equals("airport"),"Wednesday airport reuse");
+        ok(due("2026-11-19T07:01:00",w,0,NONE,NONE).locationId.equals("bank"),"Thursday bank reuse");
+        ok(due("2026-11-20T07:01:00",w,0,NONE,NONE).locationId.equals("arena"),"Friday arena selection");
+        ok(due("2026-11-16T07:01:00",w,0,NONE,NONE)!=null,"late unlock stays pending");
+        ok(due("2026-11-16T23:59:59",w,0,NONE,NONE)!=null,"pending until midnight");
+        ok(due("2026-11-17T00:00:00",w,0,NONE,NONE)==null,"previous day expires at midnight");
+        ok(due("2026-11-21T08:00:00",w,0,NONE,NONE)==null,"Saturday off");
+        ok(due("2026-11-22T08:00:00",w,0,NONE,NONE)==null,"Sunday off");
+        ok(next("2026-11-20T08:00:00",w,0,NONE,NONE).time==time("2026-11-23T07:00:00"),"weekly repeat across weekend");
+        ok(due("2026-11-23T07:01:00",w,0,NONE,NONE).locationId.equals("airport"),"next week retains same assignments");
+        ok(due("2026-11-16T08:00:00",w,time("2026-11-16T07:00:01"),NONE,NONE)==null,"save or enable excludes earlier departure");
+        ok(due("2026-11-16T08:00:00",w,time("2026-11-16T06:59:00"),NONE,NONE)!=null,"saved before time remains eligible");
+        ok(due("2026-11-16T08:00:00",w,0,day("2026-11-16"),NONE)==null,"same-day dedup");
+        ok(next("2026-11-16T06:00:00",w,0,day("2026-11-16"),NONE).weekday==1,"clock rollback does not repeat handled day");
+        ok(due("2026-11-16T08:00:00",w,0,NONE,day("2026-11-16"))==null,"skip pending departure");
+        ok(next("2026-11-15T18:00:00",w,0,NONE,day("2026-11-16")).weekday==1,"skip next Monday moves to Tuesday");
+        ok(due("2026-11-23T08:00:00",w,0,NONE,day("2026-11-16"))!=null,"skip does not repeat next week");
+        ok(due("2026-11-16T08:00:00",w,0,NONE,NONE)!=null,"clearing skip restores pending eligibility");
+        Schedule.Entry[] onlyMonday=new Schedule.Entry[7];onlyMonday[0]=on("airport");
+        ok(next("2026-11-15T18:00:00",onlyMonday,0,NONE,day("2026-11-16")).time==time("2026-11-23T07:00:00"),"one-day plan advances past skipped next week");
+        ok(next("2026-11-16T08:00:00",onlyMonday,0,day("2026-11-16"),day("2026-11-23")).time==time("2026-11-30T07:00:00"),"handled today plus skipped next Monday advances fourteen days");
+        Schedule.Entry[] off=new Schedule.Entry[7];
+        ok(next("2026-11-15T18:00:00",off,0,NONE,NONE)==null,"all days off has no next departure");
+        ok(due("2026-11-16T08:00:00",off,0,NONE,NONE)==null,"all days off has no pending departure");
+        w[1]=new Schedule.Entry(true,"bank",true,8,15);
+        ok(due("2026-11-17T08:14:59",w,0,NONE,NONE)==null,"custom time before due");
+        ok(due("2026-11-17T08:15:00",w,0,NONE,NONE).time==time("2026-11-17T08:15:00"),"custom time applies to Tuesday");
+        ok(due("2026-11-18T07:00:00",w,0,NONE,NONE)!=null,"custom time does not affect Wednesday");
+        ok(Schedule.due(time("2026-11-16T06:30:00"),LA,w,6,30,0,NONE,NONE)!=null,"default time changes inherited day");
+        ok(Schedule.due(time("2026-11-17T06:30:00"),LA,w,6,30,0,NONE,NONE)==null,"default time does not override custom day");
+        Schedule.Entry[] sun=new Schedule.Entry[7];sun[6]=new Schedule.Entry(true,"early",true,2,30);
+        ok(Schedule.next(time("2026-03-08T01:00:00"),LA,sun,7,0,0,NONE,NONE).time==time("2026-03-08T03:30:00"),"spring DST nonexistent time shifts forward");
+        sun[6]=new Schedule.Entry(true,"early",true,1,30);
+        long overlap=LocalDate.of(2026,11,1).atTime(1,30).atZone(LA).withEarlierOffsetAtOverlap().toInstant().toEpochMilli();
+        ok(Schedule.next(time("2026-11-01T00:00:00"),LA,sun,7,0,0,NONE,NONE).time==overlap,"fall DST chooses earlier occurrence");
+        ok(Schedule.due(overlap+3600000,LA,sun,7,0,0,day("2026-11-01"),NONE)==null,"fall DST cannot launch twice");
+        ok(next("2026-12-31T23:00:00",week(),0,NONE,NONE).time==time("2027-01-01T07:00:00"),"year boundary");
+        ZoneId ny=ZoneId.of("America/New_York");
+        long ny7=LocalDateTime.parse("2026-11-16T07:00:00").atZone(ny).toInstant().toEpochMilli();
+        ok(Schedule.due(ny7,ny,week(),7,0,0,NONE,NONE)!=null,"new timezone uses local 7 AM");
+        w[0]=new Schedule.Entry(true,"",false,7,0);
+        ok(due("2026-11-16T08:00:00",w,0,NONE,NONE)==null,"unassigned day cannot launch");
+        w[0]=new Schedule.Entry(true,"bad",true,25,0);
+        ok(due("2026-11-16T08:00:00",w,0,NONE,NONE)==null,"invalid time cannot launch");
+        ok(Schedule.next(time("2026-11-16T00:00:00"),LA,null,7,0,0,NONE,NONE)==null,"missing week safely produces no event");
+        System.out.println("PASS: "+checks+" weekly schedule regression checks");
     }
 }

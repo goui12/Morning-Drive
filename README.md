@@ -1,71 +1,64 @@
-# Morning Drive 1.0
+# Morning Drive 2.0
 
-A personal Android app that opens Google Maps in driving-navigation mode at a saved time on selected weekdays. Built for Cameron's Samsung Galaxy S25; Android 8.0 or later is required.
+A simple repeating weekly commute planner for Android. Save named locations, choose where to go each day, and let Google Maps handle navigation. Built for a Samsung Galaxy S25; Android 8.0 or later is supported.
 
-## Install and set up
+**[Download the latest APK](https://github.com/goui12/Morning-Drive/releases/latest/download/Morning_Drive.apk)** · [Release notes](https://github.com/goui12/Morning-Drive/releases)
 
-1. Copy `Morning_Drive.apk` to the phone, open it, and allow that browser or file manager to install unknown apps if Android asks. Install Morning Drive.
-2. Open Morning Drive. Enter a complete destination address, select the start time, and select the weekdays. Monday through Friday are selected initially.
-3. In **One-time setup**, allow **Alarms & reminders**, **Appear on top**, and **Notifications**. Android may require selecting Morning Drive from a list before granting a permission.
-4. Open **Samsung battery settings**. In the app's Battery settings, select **Unrestricted**. Remove Morning Drive from Sleeping apps or Deep sleeping apps if listed; add it to Never auto sleeping apps when that option is available. Samsung's labels and menu locations can vary by One UI version.
-5. Tap **Test navigation**. This opens Google Maps immediately using the address currently entered. Complete Google Maps' initial setup and allow its location access. Confirm that Maps recognizes the intended address and can start guidance.
-6. Return to Morning Drive and tap **Save**. The status displays the next departure. Save enables automation and keeps the configuration on the phone.
+## Set up your week
 
-For an initial end-to-end test, save a departure a few minutes in the future on today's weekday. Lock the phone before that time, wait until after the scheduled minute, and unlock it. Google Maps should open for the pending departure. Then restore the intended commute schedule and save again.
+1. Add your locations with a name and complete address, such as Airport, Bank, and Arena.
+2. Choose a default departure time.
+3. Tap each weekday to choose a location. Give a day its own time if needed, or leave it using the default.
+4. Use the location's apply action to assign several days together. **All enabled days** keeps days off untouched.
+5. Complete the app's setup buttons, then **Save schedule**. The week repeats until you change it.
 
-## Behavior
+The main screen shows the next departure, whether automation is paused, and whether edits are unsaved. Locations can be saved ahead of time without enabling any days. You can copy one day's plan to other selected days, test a location, skip the next departure, undo a skip, and pause automation without losing the plan. There is no five-location limit.
 
-- At the selected time, the app requests driving navigation from the phone's current location to the saved destination.
-- If the phone is locked, the departure remains pending. Unlocking can trigger it without opening Morning Drive.
-- Pending departures expire at local midnight. Yesterday's missed trip does not launch the following day.
-- **Save** and **Enable** apply only to future departures. Saving or enabling after today's selected time does not immediately launch a missed trip.
-- There is at most one automatic handoff to Google Maps per local calendar day. Changing the time or re-enabling after that day's handoff does not cause another automatic launch that day. **Test navigation** remains available and does not count as the scheduled handoff.
-- **Disable** cancels future scheduling and pending navigation while retaining the address, time, and weekday selection. The button changes to **Enable**.
-- Configuration survives restarts. Recovery occurs after the phone's first unlock following a restart. If today's departure became due while the phone was restarting or awaiting its first unlock, it can still run that day.
-- Times use the phone's current local time zone. Clock and time-zone changes cause the schedule to be recalculated.
-- An ongoing notification supports the small background monitor that listens for unlock events. The app does not need to stay visibly open.
+**Check for updates** opens the same download link in your browser. Installation of an update still requires your confirmation. Version 2 keeps the original application ID and signing identity, so it can update version 1 in place. The old single destination becomes **Saved location**, with its existing weekdays and departure time.
 
-**Force stop** in Android's app settings prevents automation until Morning Drive is opened again. Android's separate **Stop** action for an ongoing foreground service stops the monitor, so unlock detection can be unavailable until the next scheduled alarm or app launch. Scheduled alarms can still run after that service Stop action. Use the app's **Disable** button when you want automation paused.
+## Install on Samsung
 
-The app cannot bypass a secure lock screen or run while the phone is powered off. Revoked permissions, Samsung battery restrictions, and Android service controls can interrupt automation. If automatic launch is blocked, inspect the app's status and notification; these cases still need validation on the physical S25.
+Open the download on your phone and tap **Install**. If prompted, open **Settings** and enable **Allow from this source** for the browser or file manager that opened the APK. If Samsung's Auto Blocker prevents installation, temporarily turn it off in **Settings → Security and privacy → Auto Blocker**, install the APK, then turn it back on. Do not disable Play Protect.
 
-Google Maps handles address resolution, GPS, routing, traffic, and guidance. Sending the navigation request successfully does not prove that Maps started guidance: Maps may require first-run setup, a location fix, connectivity, or user action. Morning Drive records the handoff rather than inspecting Maps' private navigation state.
+Inside Morning Drive, the setup buttons guide you through **Alarms & reminders**, **Appear on top**, and **Notifications**. In Samsung's app Battery settings, select **Unrestricted**. Remove Morning Drive from Sleeping or Deep sleeping apps if listed; add it to Never auto sleeping apps if available. Exact menu wording can vary by One UI version.
 
-## Permissions and privacy
+Open Google Maps once, finish its setup, and allow Maps to use your location. Use **Test navigation** for each saved location to verify that Google Maps recognizes it correctly.
 
-| Permission or capability | Purpose |
-| --- | --- |
-| Alarms & reminders | Schedule a selected departure accurately, including while the phone is idle. |
-| Appear on top | Allows the app to request a navigation launch from the background under Android's background-activity rules. |
-| Notifications | Shows the ongoing monitor status and a way to open the app or retry a navigation request. |
-| Foreground service, special-use type | Keeps an unlock listener available while automation is enabled. |
-| Receive boot completed | Rebuilds scheduling after restart and the first unlock. |
+Samsung reference: [Installing apps from a website](https://www.samsung.com/us/support/troubleshoot/TSG10001914/).
 
-Morning Drive requests no internet or location permission itself. It has no account, analytics, or remote server. Destination and schedule settings are stored locally; the destination is passed to the installed Google Maps app when requesting navigation. Google Maps uses its own permissions and services.
+## Scheduling behavior
 
-## Build from source
+- Each enabled weekday has one location and one departure time. The saved plan repeats every week in the phone's local time zone.
+- At departure, an unlocked phone requests Google Maps driving navigation. If locked, that day's trip stays pending until an unlock. Pending trips expire at local midnight.
+- **Skip next departure** skips the pending trip first, otherwise the next scheduled departure. It affects only that date; the weekly plan stays intact. Undo restores the skipped date if it has not passed.
+- **Save schedule** and **Enable** apply to future departures. They do not unexpectedly launch an earlier trip from today.
+- At most one automatic navigation handoff is made per local day. **Test navigation** does not consume that day's scheduled handoff.
+- **Disable** cancels future scheduling and pending navigation without erasing locations or day assignments.
+- After a restart, scheduling is recovered after the first unlock. Today's missed departure can still run if it remains eligible.
+- Time and time-zone changes reschedule the next departure.
 
-Requirements: Linux or another environment with Bash, Java JDK 17 or newer, Android SDK platform 36, Android build-tools 36.0.0, `zip`, and standard command-line tools. There are no third-party app dependencies or Gradle downloads in this build.
+A quiet ongoing notification keeps the unlock listener available while automation is enabled. **Force stop** in Android settings prevents automation until Morning Drive is reopened. Android's foreground-service **Stop** control stops the listener; a later scheduled alarm or app launch can restart it. Use Morning Drive's Disable button to pause deliberately.
 
-The GitHub repository contains source and build scripts, but no signing key or password. The local working copy on Goggins keeps the existing signing identity in the ignored `signing/` directory so updates can retain the installed app's identity.
+The app cannot bypass the lock screen or navigate while the phone is powered off. Samsung battery restrictions or revoked permissions can interrupt automation. Google Maps controls GPS, address resolution, routing, traffic, and guidance. Morning Drive can confirm that it sent the navigation request; it cannot inspect Maps' private navigation state or prove guidance started. Test on your actual phone before relying on a commute.
 
-When building from that local working copy:
+## Privacy
+
+Saved names, addresses, and schedules stay on the phone. There is no account, analytics, or server. Morning Drive requests no internet or location permission; Google Maps uses its own permissions. Checking for updates opens GitHub in the browser. Signing keys and local settings are excluded from Git.
+
+## Build
+
+Requirements: Bash, JDK 17+, Android SDK platform 36 and build-tools 36.0.0, `zip`, and standard command-line tools. No third-party app libraries are used.
 
 ```bash
 ANDROID_HOME=/absolute/path/to/android-sdk ./build.sh
 ```
 
-For another checkout, restore the existing private key securely and set `SIGNING_KEYSTORE`, `SIGNING_ALIAS`, and `SIGNING_PASSWORD` in your environment or in an ignored `signing/signing.env` file. The default key path is `signing/morning-drive.p12` and default alias is `morningdrive`. Environment values can override the supplied local signing settings. The build passes the password to the signing tool through the environment, not a command-line argument.
+The signed output is `build/Morning_Drive.apk`. The GitHub release asset and Goggins copy are verified with SHA-256 after publication. On Goggins, the project is `C:\Users\Cameron\Documents\app_development\Morning Drive`.
 
-On Windows, these scripts require a suitable Bash build environment with the tools listed above; the repository can be edited normally on Goggins.
-
-The signed APK is written to `build/Morning_Drive.apk`. The script compiles the native Java app, packages resources, creates DEX bytecode, aligns the APK, signs it, and verifies its signature.
-
-Keep the private signing directory and any earlier source archive containing it private. They are excluded from version control. Future updates installed over this app must retain the same application ID and signing key and use an appropriate version code; generating a new key will not preserve update compatibility.
+The private `signing/` directory on Goggins retains the original key. Another checkout must restore that key securely and supply `SIGNING_KEYSTORE`, `SIGNING_ALIAS`, and `SIGNING_PASSWORD` in the environment or ignored `signing/signing.env`. Never commit the key or password. Windows builds require a suitable Bash environment, such as WSL, with the listed tools.
 
 ## Validation
 
-- 26 scheduling checks passed, covering the schedule's boundary and recovery cases.
-- APK compilation, alignment, signing, and signature verification passed.
-- Emulator runtime validation: not completed. The Android 16 software emulator did not reach a usable boot/ADB state in this build environment. Runtime smoke tests are included under `tests/android` for a suitable emulator; no runtime pass is claimed.
-- Physical Samsung Galaxy S25 validation: not performed. Treat this as a first personal build and complete the on-phone tests before relying on it for a commute.
+The weekly scheduler passes 39 regression checks. The actual configuration code passes 41 migration/persistence checks with an in-memory Android preferences facade and a test-only JSON implementation. App compilation and signature verification pass. Run the configuration tests with `bash tests/config-jvm/run-tests.sh`; the test-only dependency is downloaded into ignored build output and checked by SHA-256.
+
+Android instrumentation fixtures compile, but runtime execution could not complete because the software emulator did not finish booting. Physical Samsung Galaxy S25 testing has not been performed. See `tests/results/`, `tests/config-jvm/results.txt`, and the release notes for the exact scope.

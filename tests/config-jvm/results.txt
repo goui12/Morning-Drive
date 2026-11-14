@@ -1,0 +1,2 @@
+tests/config-jvm/build/json-20240303.jar: OK
+PASS: 41 Config migration and persistence checks (actual Config.java; in-memory Android facades; host org.json)

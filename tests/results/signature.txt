@@ -1,0 +1,17 @@
+Verifies
+Verified using v1 scheme (JAR signing): false
+Verified using v2 scheme (APK Signature Scheme v2): true
+Verified using v3 scheme (APK Signature Scheme v3): true
+Verified using v3.1 scheme (APK Signature Scheme v3.1): false
+Verified using v4 scheme (APK Signature Scheme v4): false
+Verified for SourceStamp: false
+Number of signers: 1
+Signer #1 certificate DN: CN=Morning Drive Personal Build
+Signer #1 certificate SHA-256 digest: 24913802b0fc8e958ca0e6b299c0001ff8973a081de37e6ee4e3d694d3dac8f0
+Signer #1 certificate SHA-1 digest: 43a895280e51285d4230d5ade5e678ddecd88181
+Signer #1 certificate MD5 digest: 5efdbe1dc18829004ad1cf43d72b9b7d
+Signer #1 key algorithm: RSA
+Signer #1 key size (bits): 3072
+Signer #1 public key SHA-256 digest: 29ecb23dea5e38ce6e88641718092cf8f984e9382c8914e7961688b4fc7846bd
+Signer #1 public key SHA-1 digest: 56b75c57a0444b33cf5427a113f746fa3a16f658
+Signer #1 public key MD5 digest: e6ac165d71bdace38432f725f273400e

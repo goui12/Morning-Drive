@@ -1,1 +1,1 @@
-PASS: 26 schedule regression checks
+PASS: 39 weekly schedule regression checks

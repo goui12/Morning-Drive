@@ -16,11 +16,11 @@ public final class GateActivity extends Activity {
     private void dispatch() {
         if(dispatched||isFinishing()) return;
         dispatched=true;
-        long due=Engine.due(this);
-        if(due==0||!MonitorService.unlocked(this)) { finish(); return; }
+        Engine.Departure departure=Engine.dueDeparture(this);
+        if(departure==null||departure.epochDay!=LocalDate.now().toEpochDay()||!MonitorService.unlocked(this)) { finish(); return; }
         try {
-            startActivity(Navigator.intent(Config.load(this).address));
-            Config.handled(this,Instant.ofEpochMilli(due).atZone(ZoneId.systemDefault()).toLocalDate().toEpochDay());
+            startActivity(Navigator.intent(departure.location.address));
+            Config.handled(this,departure.epochDay);
         } catch (android.content.ActivityNotFoundException e) {
             Config.status(this,"Install or enable Google Maps. Departure still pending.");
         } catch (SecurityException e) {

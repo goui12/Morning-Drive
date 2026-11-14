@@ -2,7 +2,7 @@
 set -euo pipefail
 cd "$(dirname "$0")/../.."
 : "${ANDROID_HOME:?Set ANDROID_HOME}"
-ADB="$ANDROID_HOME/platform-tools/adb"
+ADB="${ADB_BIN:-$ANDROID_HOME/platform-tools/adb}"
 if [ "$("$ADB" shell getprop ro.kernel.qemu | tr -d '\r')" != 1 ]; then
   echo "Refusing: these fixtures are only for an isolated emulator." >&2
   exit 1
@@ -13,9 +13,10 @@ fi
 "$ADB" install -r build/Morning_Drive.apk
 "$ADB" install -r tests/android/build/probe/probe.apk
 "$ADB" install -r tests/android/build/tests/tests.apk
-"$ADB" shell appops set com.cameron.morningdrive SCHEDULE_EXACT_ALARM allow
+SDK_LEVEL=$("$ADB" shell getprop ro.build.version.sdk | tr -d '\r')
+if [ "$SDK_LEVEL" -ge 31 ]; then "$ADB" shell appops set com.cameron.morningdrive SCHEDULE_EXACT_ALARM allow; fi
 "$ADB" shell appops set com.cameron.morningdrive SYSTEM_ALERT_WINDOW allow
-"$ADB" shell pm grant com.cameron.morningdrive android.permission.POST_NOTIFICATIONS
+if [ "$SDK_LEVEL" -ge 33 ]; then "$ADB" shell pm grant com.cameron.morningdrive android.permission.POST_NOTIFICATIONS; fi
 "$ADB" logcat -c
 "$ADB" shell am instrument -w com.cameron.morningdrive.tests/com.cameron.morningdrive.SmokeInstrumentation | tee tests/android/build/results.txt
 if ! grep -q 'SUCCESS:' tests/android/build/results.txt; then
